@@ -38,11 +38,18 @@ export async function initEmailTransporter(): Promise<void> {
       user: etherealAccount.user,
       pass: etherealAccount.pass,
     },
+    connectionTimeout: 5000,
+    greetingTimeout: 5000,
   });
 
-  // Verify connection
-  await transporter.verify();
-  console.log('✅ Ethereal SMTP connected');
+  // Verify connection non-fatally so cloud providers restricting outbound port 587 do not prevent server boot
+  try {
+    await transporter.verify();
+    console.log('✅ Ethereal SMTP connected');
+  } catch (err: any) {
+    console.warn('⚠️  Ethereal SMTP verification timed out or failed (outbound port 587 may be blocked by cloud provider):', err.message || err);
+    console.warn('   Server continuing to boot normally. Email jobs will attempt delivery when executed.');
+  }
 }
 
 export interface SendEmailOptions {
