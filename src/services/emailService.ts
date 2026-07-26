@@ -1,0 +1,84 @@
+import nodemailer from 'nodemailer';
+import { env } from '../config/env';
+
+let transporter: nodemailer.Transporter | null = null;
+let etherealAccount: { user: string; pass: string; previewBase: string } | null = null;
+
+/**
+ * Initialize Ethereal Email transporter.
+ * If ETHEREAL_USER/PASS are set in env, use those.
+ * Otherwise, auto-create a new Ethereal test account.
+ */
+export async function initEmailTransporter(): Promise<void> {
+  if (env.ETHEREAL_USER && env.ETHEREAL_PASS) {
+    etherealAccount = {
+      user: env.ETHEREAL_USER,
+      pass: env.ETHEREAL_PASS,
+      previewBase: 'https://ethereal.email/message',
+    };
+  } else {
+    const account = await nodemailer.createTestAccount();
+    etherealAccount = {
+      user: account.user,
+      pass: account.pass,
+      previewBase: 'https://ethereal.email/message',
+    };
+    console.log('📧 Ethereal Email account created:');
+    console.log('   User:', account.user);
+    console.log('   Pass:', account.pass);
+    console.log('   Preview: https://ethereal.email/login');
+    console.log('   (Add these to .env as ETHEREAL_USER/ETHEREAL_PASS to reuse)');
+  }
+
+  transporter = nodemailer.createTransport({
+    host: 'smtp.ethereal.email',
+    port: 587,
+    secure: false,
+    auth: {
+      user: etherealAccount.user,
+      pass: etherealAccount.pass,
+    },
+  });
+
+  // Verify connection
+  await transporter.verify();
+  console.log('✅ Ethereal SMTP connected');
+}
+
+export interface SendEmailOptions {
+  toEmail: string;
+  fromEmail: string;
+  fromName: string;
+  subject: string;
+  body: string;
+}
+
+export interface SendEmailResult {
+  messageId: string;
+  previewUrl: string;
+}
+
+/**
+ * Send a single email via Ethereal SMTP.
+ * Returns the message ID and preview URL.
+ */
+export async function sendEmail(options: SendEmailOptions): Promise<SendEmailResult> {
+  if (!transporter || !etherealAccount) {
+    throw new Error('Email transporter not initialized. Call initEmailTransporter() first.');
+  }
+
+  const info = await transporter.sendMail({
+    from: `"${options.fromName}" <${options.fromEmail}>`,
+    to: options.toEmail,
+    subject: options.subject,
+    html: options.body,
+    text: options.body.replace(/<[^>]*>/g, ''), // Strip HTML for text version
+  });
+
+  const previewUrl = nodemailer.getTestMessageUrl(info) || `${etherealAccount.previewBase}/${info.messageId}`;
+
+  return {
+    messageId: info.messageId,
+    previewUrl: previewUrl as string,
+  };
+}
