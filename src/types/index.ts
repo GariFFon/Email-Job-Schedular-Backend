@@ -89,8 +89,6 @@ export interface AuthUser {
   avatar: string | null;
 }
 
-export interface JwtPayload {
+export interface UserSession {
   userId: string;
-  email: string;
-  name: string;
 }

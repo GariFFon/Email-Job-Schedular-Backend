@@ -1,9 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import { env } from '../config/env';
-import type { JwtPayload } from '../types';
+import type { UserSession } from '../types';
 
-// Extend Express Request to include our user type
+// Extend Express Request to include passport user type
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
@@ -20,7 +18,7 @@ declare global {
 }
 
 export interface AuthRequest extends Request {
-  jwtUser?: JwtPayload;
+  userSession?: UserSession;
 }
 
 export function authMiddleware(
@@ -35,13 +33,14 @@ export function authMiddleware(
     return;
   }
 
-  const token = authHeader.substring(7);
+  const token = authHeader.substring(7).trim();
 
-  try {
-    const payload = jwt.verify(token, env.JWT_SECRET) as JwtPayload;
-    req.jwtUser = payload;
-    next();
-  } catch {
-    res.status(401).json({ error: 'Unauthorized: Invalid or expired token' });
+  if (!token) {
+    res.status(401).json({ error: 'Unauthorized: Invalid token' });
+    return;
   }
+
+  // Treat the bearer token as the authenticated user ID session
+  req.userSession = { userId: token };
+  next();
 }

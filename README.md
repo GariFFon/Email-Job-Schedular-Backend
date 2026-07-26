@@ -21,7 +21,7 @@ A **production-grade email scheduling service + dashboard** built with:
 # Backend
 cd Email-Job-Schedular-Backend
 cp .env.example .env
-# Fill in GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and a strong JWT_SECRET
+# Fill in GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET
 
 # Frontend
 cd ../Email-Job-Schedular-Fronted
@@ -129,7 +129,6 @@ Every sent email prints a **preview URL** to the server console. Open it to see 
 | `REDIS_URL` | — | (optional) Redis connection URL (supports Upstash `rediss://`) |
 | `REDIS_HOST` | `localhost` | Redis host (fallback if REDIS_URL not set) |
 | `REDIS_PORT` | `6379` | Redis port |
-| `JWT_SECRET` | — | ≥32 char secret for JWT signing |
 | `GOOGLE_CLIENT_ID` | — | Google OAuth client ID |
 | `GOOGLE_CLIENT_SECRET` | — | Google OAuth client secret |
 | `GOOGLE_CALLBACK_URL` | `http://localhost:3001/api/auth/google/callback` | OAuth redirect |
@@ -245,8 +244,8 @@ Worker is configured with `concurrency: 5` (configurable via `WORKER_CONCURRENCY
 - [x] Per-sender hourly rate limit (Redis Lua, configurable)
 - [x] Jobs rescheduled to next hour on rate limit (not dropped)
 - [x] Exponential backoff retries (3 attempts: 5s, 10s, 20s)
-- [x] Google OAuth (Passport.js + JWT)
-- [x] JWT authentication middleware
+- [x] Google OAuth (Passport.js)
+- [x] Session authentication middleware
 - [x] CSV email parsing API
 - [x] Paginated email listing (scheduled + sent)
 - [x] Email stats (counts by status)
@@ -257,7 +256,7 @@ Worker is configured with `concurrency: 5` (configurable via `WORKER_CONCURRENCY
 ### Frontend
 - [x] Google OAuth login (real, not mock)
 - [x] Email/password login form (UI only)
-- [x] Session persistence (JWT in localStorage)
+- [x] Session persistence in localStorage
 - [x] Auto-logout on 401
 - [x] Dashboard matching Figma design exactly
 - [x] Left sidebar: ONB logo, user profile, Compose button, Scheduled/Sent nav

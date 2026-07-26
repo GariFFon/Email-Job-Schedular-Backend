@@ -15,11 +15,6 @@ const envSchema = z.object({
   REDIS_HOST: z.string().default('localhost'),
   REDIS_PORT: z.string().default('6379').transform(Number),
   REDIS_PASSWORD: z.string().optional(),
-
-  // JWT
-  JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 chars'),
-  JWT_EXPIRES_IN: z.string().default('7d'),
-
   // Google OAuth
   GOOGLE_CLIENT_ID: z.string().min(1, 'GOOGLE_CLIENT_ID is required'),
   GOOGLE_CLIENT_SECRET: z.string().min(1, 'GOOGLE_CLIENT_SECRET is required'),

@@ -1,13 +1,11 @@
 import { Router, Request, Response } from 'express';
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
-import jwt from 'jsonwebtoken';
 import { eq } from 'drizzle-orm';
 import { db } from '../config/database';
 import { users } from '../database/schema';
 import { env } from '../config/env';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
-import type { JwtPayload } from '../types';
 
 const router = Router();
 
@@ -72,13 +70,6 @@ passport.use(
   ),
 );
 
-function generateToken(userId: string, email: string, name: string): string {
-  const payload: JwtPayload = { userId, email, name };
-  return jwt.sign(payload, env.JWT_SECRET, {
-    expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'],
-  });
-}
-
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
 /** Initiate Google OAuth flow */
@@ -99,7 +90,7 @@ router.get(
   }),
   (req: Request, res: Response) => {
     const user = req.user as typeof users.$inferSelect;
-    const token = generateToken(user.id, user.email, user.name);
+    const token = user.id; // Use user ID directly as session token
 
     // Redirect to frontend with token
     res.redirect(`${env.FRONTEND_URL}/auth/callback?token=${token}`);
@@ -109,7 +100,7 @@ router.get(
 /** Get current user info */
 router.get('/me', authMiddleware as any, async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.jwtUser!.userId;
+    const userId = req.userSession!.userId;
     const [user] = await db
       .select()
       .from(users)

@@ -58,7 +58,7 @@ router.post('/schedule', authMiddleware as any, async (req: AuthRequest, res: Re
       return;
     }
 
-    const result = await scheduleEmailBatch(req.jwtUser!.userId, parsed.data);
+    const result = await scheduleEmailBatch(req.userSession!.userId, parsed.data);
 
     res.status(201).json({
       message: `Successfully scheduled ${result.jobsCreated} emails`,
@@ -107,7 +107,7 @@ router.post(
         return;
       }
 
-      const result = await scheduleEmailBatch(req.jwtUser!.userId, parsed.data);
+      const result = await scheduleEmailBatch(req.userSession!.userId, parsed.data);
 
       res.status(201).json({
         message: `Successfully scheduled ${result.jobsCreated} emails`,
@@ -152,7 +152,7 @@ router.get('/scheduled', authMiddleware as any, async (req: AuthRequest, res: Re
   try {
     const page = parseInt(String(req.query.page || '1'));
     const pageSize = parseInt(String(req.query.pageSize || '20'));
-    const result = await getScheduledEmails(req.jwtUser!.userId, page, pageSize);
+    const result = await getScheduledEmails(req.userSession!.userId, page, pageSize);
     res.json(result);
   } catch (err) {
     console.error('GET /emails/scheduled error:', err);
@@ -167,7 +167,7 @@ router.get('/sent', authMiddleware as any, async (req: AuthRequest, res: Respons
   try {
     const page = parseInt(String(req.query.page || '1'));
     const pageSize = parseInt(String(req.query.pageSize || '20'));
-    const result = await getSentEmails(req.jwtUser!.userId, page, pageSize);
+    const result = await getSentEmails(req.userSession!.userId, page, pageSize);
     res.json(result);
   } catch (err) {
     console.error('GET /emails/sent error:', err);
@@ -180,7 +180,7 @@ router.get('/sent', authMiddleware as any, async (req: AuthRequest, res: Respons
  */
 router.get('/stats', authMiddleware as any, async (req: AuthRequest, res: Response) => {
   try {
-    const stats = await getEmailStats(req.jwtUser!.userId);
+    const stats = await getEmailStats(req.userSession!.userId);
     res.json(stats);
   } catch (err) {
     console.error('GET /emails/stats error:', err);
@@ -193,7 +193,7 @@ router.get('/stats', authMiddleware as any, async (req: AuthRequest, res: Respon
  */
 router.delete('/:id', authMiddleware as any, async (req: AuthRequest, res: Response) => {
   try {
-    const success = await cancelScheduledEmail(req.jwtUser!.userId, req.params.id);
+    const success = await cancelScheduledEmail(req.userSession!.userId, req.params.id);
     if (!success) {
       res.status(404).json({ error: 'Email not found or already sent' });
       return;
@@ -210,7 +210,7 @@ router.delete('/:id', authMiddleware as any, async (req: AuthRequest, res: Respo
  */
 router.patch('/:id/star', authMiddleware as any, async (req: AuthRequest, res: Response) => {
   try {
-    const isStarred = await toggleStarEmail(req.jwtUser!.userId, req.params.id);
+    const isStarred = await toggleStarEmail(req.userSession!.userId, req.params.id);
     res.json({ isStarred });
   } catch (_err) {
     res.status(500).json({ error: 'Failed to update star' });
