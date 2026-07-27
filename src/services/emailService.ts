@@ -1,15 +1,23 @@
 import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import { env } from '../config/env';
 
 let transporter: nodemailer.Transporter | null = null;
 let etherealAccount: { user: string; pass: string; previewBase: string } | null = null;
+let resendClient: Resend | null = null;
 
 /**
- * Initialize Ethereal Email transporter.
- * If ETHEREAL_USER/PASS are set in env, use those.
- * Otherwise, auto-create a new Ethereal test account.
+ * Initialize Email provider.
+ * If RESEND_API_KEY is configured, initializes Resend HTTP client (ideal for cloud production).
+ * Otherwise, falls back to Ethereal SMTP for local testing.
  */
 export async function initEmailTransporter(): Promise<void> {
+  if (env.RESEND_API_KEY) {
+    resendClient = new Resend(env.RESEND_API_KEY);
+    console.log('✅ Resend API client initialized (Production HTTP Mode - Port 443)');
+    return;
+  }
+
   if (env.ETHEREAL_USER && env.ETHEREAL_PASS) {
     etherealAccount = {
       user: env.ETHEREAL_USER,
@@ -66,10 +74,36 @@ export interface SendEmailResult {
 }
 
 /**
- * Send a single email via Ethereal SMTP.
+ * Send a single email via Resend API or Ethereal SMTP.
  * Returns the message ID and preview URL.
  */
 export async function sendEmail(options: SendEmailOptions): Promise<SendEmailResult> {
+  if (resendClient) {
+    // Resend requires sending from a verified domain or onboarding@resend.dev when on the free tier.
+    // If RESEND_FROM_EMAIL is set in .env, use it. Otherwise default to onboarding@resend.dev.
+    const fromAddress = env.RESEND_FROM_EMAIL
+      ? `"${options.fromName}" <${env.RESEND_FROM_EMAIL}>`
+      : `"${options.fromName}" <onboarding@resend.dev>`;
+
+    const { data, error } = await resendClient.emails.send({
+      from: fromAddress,
+      to: options.toEmail,
+      subject: options.subject,
+      html: options.body,
+      text: options.body.replace(/<[^>]*>/g, ''),
+      replyTo: options.fromEmail, // Allows recipient replies to go directly to the original sender!
+    });
+
+    if (error || !data) {
+      throw new Error(`Resend API error: ${error?.message || 'Unknown error'}`);
+    }
+
+    return {
+      messageId: data.id,
+      previewUrl: `https://resend.com/emails/${data.id}`,
+    };
+  }
+
   if (!transporter || !etherealAccount) {
     throw new Error('Email transporter not initialized. Call initEmailTransporter() first.');
   }

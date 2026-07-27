@@ -33,6 +33,10 @@ const envSchema = z.object({
   // Ethereal (optional — auto-generated if empty)
   ETHEREAL_USER: z.string().optional(),
   ETHEREAL_PASS: z.string().optional(),
+
+  // Resend API (optional — uses HTTPS port 443 which works on Render and cloud production)
+  RESEND_API_KEY: z.string().optional(),
+  RESEND_FROM_EMAIL: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
