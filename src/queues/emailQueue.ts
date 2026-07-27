@@ -49,7 +49,7 @@ export async function enqueueEmailJob(
     'send-email',
     jobData,
     {
-      jobId: `email:${jobData.idempotencyKey}`, // Prevents duplicate jobs
+      jobId: `email_${jobData.idempotencyKey}`, // Prevents duplicate jobs
       delay: Math.max(0, delayMs),
     },
   );
@@ -62,7 +62,7 @@ export async function enqueueEmailJob(
  */
 export async function cancelEmailJob(idempotencyKey: string): Promise<boolean> {
   const queue = getEmailQueue();
-  const jobId = `email:${idempotencyKey}`;
+  const jobId = `email_${idempotencyKey}`;
   const job = await queue.getJob(jobId);
 
   if (!job) return false;
