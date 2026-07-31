@@ -8,6 +8,7 @@ function getRedisOptions(lazyConnect = false): RedisOptions {
     maxRetriesPerRequest: null, // Required by BullMQ
     enableReadyCheck: false,    // Required by BullMQ
     lazyConnect,
+    family: 0,                  // Required for Upstash with Node.js 18+
   };
 
   if (env.REDIS_URL && env.REDIS_URL.startsWith('rediss://')) {
