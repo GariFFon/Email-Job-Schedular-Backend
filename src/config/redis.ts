@@ -11,7 +11,13 @@ function getRedisOptions(lazyConnect = false): RedisOptions {
     family: 0,                  // Required for Upstash with Node.js 18+
   };
 
-  if (env.REDIS_URL && env.REDIS_URL.startsWith('rediss://')) {
+  // Upstash requires TLS whether the URL is redis:// or rediss://
+  // Always enable TLS when connecting to upstash.io
+  const url = env.REDIS_URL || '';
+  const isUpstash = url.includes('upstash.io');
+  const isTLSScheme = url.startsWith('rediss://');
+
+  if (isUpstash || isTLSScheme) {
     baseOpts.tls = { rejectUnauthorized: false };
   }
 
